@@ -1,6 +1,6 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-var ldapjs = Npm.require('ldapjs');
-var Future = Npm.require('fibers/future');
+let ldapjs = Npm.require('ldapjs');
+let Future = Npm.require('fibers/future');
 
 
 class LDAP {
@@ -10,11 +10,14 @@ class LDAP {
     });
   }
 
-  authenticate (username, password) {
-    var fut = new Future();
-    var dn = `uid=${username},ou=People,dc=internal,dc=machines`;
+  dn (username) {
+    return `uid=${username},ou=People,dc=internal,dc=machines`;
+  }
 
-    this.client.bind(dn, password, function(err, res) {
+  authenticate (username, password) {
+    let fut = new Future();
+
+    this.client.bind(this.dn(username), password, function(err, res) {
       if (err) {
         console.log(err);
       }
@@ -26,10 +29,9 @@ class LDAP {
   }
 
   getGroupsForUser (username) {
-    var fut = new Future();
-    var dn = `uid=${username},ou=People,dc=internal,dc=machines`;
+    let fut = new Future();
 
-    this.client.search(dn, {
+    this.client.search(this.dn(username), {
       scope: 'sub',
       filter: '(&(objectClass=kreditorUser)(kreditorEnabledUser=TRUE))'
     }, function (err, res) {
@@ -38,7 +40,7 @@ class LDAP {
       }
       else {
         res.on('searchEntry', function (entry) {
-          var groups = entry.object.memberOf.map( (s) => s.match(/^cn=(.*?),/)[1] );
+          let groups = entry.object.memberOf.map( (s) => s.match(/^cn=(.*?),/)[1] );
           fut.return(groups);
         });
 
@@ -58,13 +60,13 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
     return undefined;
   }
 
-  var username = loginRequest.username;
-  var password = loginRequest.password;
-  var ldap = new LDAP();
+  const username = loginRequest.username;
+  const password = loginRequest.password;
+  let ldap = new LDAP();
 
   if (ldap.authenticate(username, password)) {
-    var userId = null
-    var user = Meteor.users.findOne({username: username});
+    let userId = null
+    let user = Meteor.users.findOne({username: username});
 
     if (user) {
       userId = user._id;
@@ -73,7 +75,7 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
       userId = Meteor.users.insert({ username: username });
     }
 
-    var groups = ldap.getGroupsForUser(username);
+    let groups = ldap.getGroupsForUser(username);
     console.log(groups);
 
     return {
