@@ -1,4 +1,4 @@
-Template.body.events({
+Template.login.events({
   'submit form': function(event, template) {
     event.preventDefault();
 
@@ -6,9 +6,5 @@ Template.body.events({
     var password = template.find('[name=password]').value;
 
     Meteor.loginWithLDAP(username, password);
-  },
-
-  'click .js-logout': function() {
-    Meteor.logout();
   }
 });

@@ -9,3 +9,5 @@ autopublish
 insecure
 klarna:accounts-ldap
 msavin:mongol
+kadira:flow-router
+kadira:blaze-layout

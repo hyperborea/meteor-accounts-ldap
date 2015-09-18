@@ -3,6 +3,15 @@ let ldapjs = Npm.require('ldapjs');
 let Future = Npm.require('fibers/future');
 
 
+LDAP_SETTINGS = {
+  fields: ['displayName', 'mail', 'title', 'groups'],
+  roleMapping: {
+    'access': ['risk.infrastructure']
+  }
+};
+
+
+// Class for authenticating and querying LDAP.
 class LDAP {
   constructor() {
     this.client = ldapjs.createClient({
@@ -28,7 +37,7 @@ class LDAP {
     return fut.wait();
   }
 
-  getGroupsForUser (username) {
+  query (username) {
     let fut = new Future();
 
     this.client.search(this.dn(username), {
@@ -40,8 +49,14 @@ class LDAP {
       }
       else {
         res.on('searchEntry', function (entry) {
-          let groups = entry.object.memberOf.map( (s) => s.match(/^cn=(.*?),/)[1] );
-          fut.return(groups);
+          let object = _.extend({
+            username: username,
+            groups: entry.object.memberOf.map( (s) => s.match(/^cn=(.*?),/)[1] )
+          },
+            _.pick(entry.object, LDAP_SETTINGS.fields)
+          );
+
+          fut.return(object);
         });
 
         res.on('error', function (err) {
@@ -55,6 +70,17 @@ class LDAP {
 }
 
 
+// Make sure all additional user fields are published.
+Meteor.startup(function() {
+  Meteor.publish(null, function() {
+    let fields = {};
+    LDAP_SETTINGS.fields.forEach((k) => fields[k] = 1);
+    return Meteor.users.find({_id: this.userId}, {fields: fields});
+  });
+});
+
+
+// New login handler for LDAP authentication.
 Accounts.registerLoginHandler('ldap', function(loginRequest) {
   if (!loginRequest.ldap) {
     return undefined;
@@ -65,18 +91,27 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
   let ldap = new LDAP();
 
   if (ldap.authenticate(username, password)) {
-    let userId = null
+    let userId = null;
     let user = Meteor.users.findOne({username: username});
 
     if (user) {
       userId = user._id;
     }
     else {
-      userId = Meteor.users.insert({ username: username });
+      userId = Meteor.users.insert({username: username});
     }
 
-    let groups = ldap.getGroupsForUser(username);
-    console.log(groups);
+    const object = ldap.query(username);
+    Meteor.users.update(userId, object);
+
+    _.each(LDAP_SETTINGS.roleMapping, function(groups, role) {
+      if (_.intersection(groups, object.groups).length) {
+        Roles.addUsersToRoles(user, [role]);
+      }
+      else {
+        Roles.removeUsersFromRoles(userId, [role]);
+      }
+    });
 
     return {
       userId: userId
