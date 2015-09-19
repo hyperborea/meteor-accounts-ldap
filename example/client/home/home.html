@@ -1,3 +1,10 @@
 <template name="home">
-  logged in as <b>{{currentUser.username}}</b> <button class="js-logout">logout</button>
+  <h1>Hello {{currentUser.displayName}}</h1>
+  logged in as <b>{{currentUser.username}}</b> <a href="/logout">logout</a>
+
+  <ul>
+    {{#each currentUser.groups}}
+      <li>{{.}}</li>
+    {{/each}}
+  </ul>
 </template>

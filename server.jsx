@@ -4,9 +4,11 @@ let Future = Npm.require('fibers/future');
 
 
 LDAP_SETTINGS = {
+  // Fields to copy over from LDAP to Meteor account.
   fields: ['displayName', 'mail', 'title', 'groups'],
+  // If user is in any of the listed groups the Meteor role will be added, otherwise removed.
   roleMapping: {
-    'access': ['risk.infrastructure']
+    // 'meteorRole': ['ldapGroup1', 'ldapGroup2']
   }
 };
 
@@ -104,6 +106,7 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
     const object = ldap.query(username);
     Meteor.users.update(userId, object);
 
+    // console.log(LDAP_SETTINGS.roleMapping);
     _.each(LDAP_SETTINGS.roleMapping, function(groups, role) {
       if (_.intersection(groups, object.groups).length) {
         Roles.addUsersToRoles(user, [role]);
@@ -118,5 +121,7 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
     };
   } 
   
-  return undefined;
+  return {
+    error: new Meteor.Error(403, "Authentication failed.")
+  };
 });
