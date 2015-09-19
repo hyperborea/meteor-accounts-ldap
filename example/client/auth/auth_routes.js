@@ -1,13 +1,5 @@
 AUTH_ROUTES = ['login', 'logout', 'noaccess'];
 
-// Require users to have at least the 'access' role.
-FlowRouter.triggers.enter([requireAccess], {except: AUTH_ROUTES});
-function requireAccess() {
-  if (!Roles.userIsInRole(Meteor.user(), 'access')) {
-    FlowRouter.go('noaccess');
-  }
-}
-
 // Make sure the user is logged in, otherwise redirect to login page.
 Meteor.startup(function() {
   Tracker.autorun(function() {
@@ -27,6 +19,14 @@ Accounts.onLogin(function() {
   var redirect = Session.get('redirectAfterLogin') || 'home';
   FlowRouter.go(redirect);
 });
+
+// Require users to have at least the 'access' role.
+FlowRouter.triggers.enter([requireAccess], {except: AUTH_ROUTES});
+function requireAccess() {
+  if (!Roles.userIsInRole(Meteor.user(), 'access')) {
+    FlowRouter.go('noaccess');
+  }
+}
 
 
 FlowRouter.route('/login', {
