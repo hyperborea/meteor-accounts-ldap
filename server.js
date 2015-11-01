@@ -30,7 +30,7 @@ class LDAP {
   dn () {
     return `uid=${this.username},ou=People,dc=internal,dc=machines`;
   }
-
+ 
   isGuestUser () {
     const guest = LDAP_SETTINGS.guestUser;
     return guest && this.username == guest.username && this.password == guest.password;
@@ -56,6 +56,7 @@ class LDAP {
     if (this.isGuestUser()) return LDAP_SETTINGS.guestUser;
 
     let fut = new Future();
+    let self = this;
 
     this.client.search(this.dn(), {
       scope: 'sub',
@@ -67,7 +68,7 @@ class LDAP {
       else {
         res.on('searchEntry', function (entry) {
           let object = _.extend({
-            username: this.username,
+            username: self.username,
             groups: entry.object.memberOf.map( (s) => s.match(/^cn=(.*?),/)[1] )
           },
             _.pick(entry.object, LDAP_SETTINGS.fields)
