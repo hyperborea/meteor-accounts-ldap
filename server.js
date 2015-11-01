@@ -9,26 +9,39 @@ LDAP_SETTINGS = {
   // If user is in any of the listed groups the Meteor role will be added, otherwise removed.
   roleMapping: {
     // 'meteorRole': ['ldapGroup1', 'ldapGroup2']
-  }
+  },
+  // guestUser: {
+    // username: 'guest',
+    // password: 'guest',
+  // }
 };
 
 
 // Class for authenticating and querying LDAP.
 class LDAP {
-  constructor() {
+  constructor (username, password) {
+    this.username = username;
+    this.password = password;
     this.client = ldapjs.createClient({
       url: 'ldaps://ldap-slave-lb.int.klarna.net'
     });
   }
 
-  dn (username) {
-    return `uid=${username},ou=People,dc=internal,dc=machines`;
+  dn () {
+    return `uid=${this.username},ou=People,dc=internal,dc=machines`;
   }
 
-  authenticate (username, password) {
+  isGuestUser () {
+    const guest = LDAP_SETTINGS.guestUser;
+    return guest && this.username == guest.username && this.password == guest.password;
+  }
+
+  authenticate () {
+    if (this.isGuestUser()) return true;
+
     let fut = new Future();
 
-    this.client.bind(this.dn(username), password, function(err, res) {
+    this.client.bind(this.dn(), this.password, function(err, res) {
       if (err) {
         console.log(err);
       }
@@ -39,10 +52,12 @@ class LDAP {
     return fut.wait();
   }
 
-  query (username) {
+  query () {
+    if (this.isGuestUser()) return LDAP_SETTINGS.guestUser;
+
     let fut = new Future();
 
-    this.client.search(this.dn(username), {
+    this.client.search(this.dn(), {
       scope: 'sub',
       filter: '(&(objectClass=kreditorUser)(kreditorEnabledUser=TRUE))'
     }, function (err, res) {
@@ -52,7 +67,7 @@ class LDAP {
       else {
         res.on('searchEntry', function (entry) {
           let object = _.extend({
-            username: username,
+            username: this.username,
             groups: entry.object.memberOf.map( (s) => s.match(/^cn=(.*?),/)[1] )
           },
             _.pick(entry.object, LDAP_SETTINGS.fields)
@@ -90,9 +105,9 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
 
   const username = loginRequest.username;
   const password = loginRequest.password;
-  let ldap = new LDAP();
+  let ldap = new LDAP(username, password);
 
-  if (ldap.authenticate(username, password)) {
+  if (ldap.authenticate()) {
     let userId = null;
     let user = Meteor.users.findOne({username: username});
 
@@ -103,10 +118,9 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
       userId = Meteor.users.insert({username: username});
     }
 
-    const object = ldap.query(username);
+    const object = ldap.query();
     Meteor.users.update(userId, object);
 
-    // console.log(LDAP_SETTINGS.roleMapping);
     _.each(LDAP_SETTINGS.roleMapping, function(groups, role) {
       if (_.intersection(groups, object.groups).length) {
         Roles.addUsersToRoles(user, [role]);
