@@ -10,6 +10,7 @@ LDAP_SETTINGS = {
   roleMapping: {
     // 'meteorRole': ['ldapGroup1', 'ldapGroup2']
   },
+  // allowedGroups: ['allowedLdapGroup1', 'allowedLdapGroup2'],
   // guestUser: {
     // username: 'guest',
     // password: 'guest',
@@ -23,7 +24,8 @@ class LDAP {
     this.username = username;
     this.password = password;
     this.client = ldapjs.createClient({
-      url: 'ldaps://ldap-slave-lb.int.klarna.net'
+      url: 'ldaps://ldap-slave-lb.int.klarna.net',
+      timeout: 3000
     });
   }
 
@@ -131,9 +133,17 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
       }
     });
 
-    return {
-      userId: userId
-    };
+    const allowedGroups = LDAP_SETTINGS.allowedGroups;
+    if (allowedGroups && _.intersection(allowedGroups, object.groups).length < 1) {
+      return {
+        error: new Meteor.Error(403, "Access denied, please request permissions.")
+      }
+    }
+    else {
+      return {
+        userId: userId
+      };
+    }
   } 
   
   return {
