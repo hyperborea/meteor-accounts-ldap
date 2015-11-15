@@ -119,6 +119,7 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
     }
     else {
       userId = Meteor.users.insert({username: username});
+      user = Meteor.users.findOne(userId);
     }
 
     const object = ldap.query();
