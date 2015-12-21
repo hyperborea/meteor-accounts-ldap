@@ -123,7 +123,7 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
     }
 
     const object = ldap.query();
-    Meteor.users.update(userId, object);
+    Meteor.users.update(userId, {$set: object});
 
     _.each(LDAP_SETTINGS.roleMapping, function(groups, role) {
       if (_.intersection(groups, object.groups).length) {
