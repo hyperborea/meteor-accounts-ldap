@@ -1,16 +1,16 @@
 Package.describe({
-  name: 'klarna:accounts-ldap',
+  name: 'hyperborea:accounts-ldap',
   version: '1.0.0',
-  summary: '',
+  summary: 'Extends account package to support LDAP.',
   git: '',
-  documentation: 'README.md'
+  documentation: null
 });
 
 Npm.depends({'ldapjs': '0.7.1'});
 
 Package.onUse(function(api) {
   api.versionsFrom('1.1.0.3');
-  api.use('ecmascript');
+  api.use('ecmascript@0.4.0');
   api.use('accounts-base');
   api.use('alanning:roles@1.2.13');
 
