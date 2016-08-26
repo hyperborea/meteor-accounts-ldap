@@ -6,7 +6,7 @@ Template.login.events({
     var password = template.find('[name=password]').value;
 
     Meteor.loginWithLDAP(username, password, function(err) {
-      if (err) alert('Authentication failed, please try again');
+      if (err) alert(err);
     });
   }
 });
