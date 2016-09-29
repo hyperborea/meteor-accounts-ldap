@@ -9,7 +9,7 @@ Package.describe({
 Npm.depends({'ldapjs': '1.0.0'});
 
 Package.onUse(function(api) {
-  api.versionsFrom('1.1.0.3');
+  api.versionsFrom('1.4.1.1');
   api.use('ecmascript@0.4.0');
   api.use('accounts-password');
   api.use('alanning:roles@1.2.13');
