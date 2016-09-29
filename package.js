@@ -1,6 +1,6 @@
 Package.describe({
   name: 'hyperborea:accounts-ldap',
-  version: '1.0.1',
+  version: '2.0.0',
   summary: 'Extends account package to support LDAP.',
   git: '',
   documentation: null
@@ -11,7 +11,7 @@ Npm.depends({'ldapjs': '1.0.0'});
 Package.onUse(function(api) {
   api.versionsFrom('1.1.0.3');
   api.use('ecmascript@0.4.0');
-  api.use('accounts-base');
+  api.use('accounts-password');
   api.use('alanning:roles@1.2.13');
 
   api.imply('accounts-base');

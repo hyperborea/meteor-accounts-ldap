@@ -1,16 +1,13 @@
 if (Meteor.isServer) {
   _.extend(LDAP_SETTINGS, {
-    allowedGroups: ['example.debug'],
+    url: "ldaps://ldap-slave-lb.int.klarna.net",
+    dn: "uid={username},ou=People,dc=internal,dc=machines",
+    filter: "(&(objectClass=kreditorUser)(kreditorEnabledUser=TRUE))",
+
+    allowedGroups: ['users'],
     
     roleMapping: {
-      access: ['example.debug']
-    },
-
-    guestUser: {
-      username: 'guest',
-      password: 'guest',
-      displayName: 'Guest User',
-      groups: ['example.debug'],
+      access: ['users']
     }
   });  
 }
