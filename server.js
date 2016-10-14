@@ -72,8 +72,10 @@ class LDAP {
           );
 
           if (LDAP_SETTINGS.groups) {
-            object.groups = entry.object[LDAP_SETTINGS.groups.sourceField] || [];
-            object.groups = object.groups.map((s) => {
+            let groups = entry.object[LDAP_SETTINGS.groups.sourceField] || [];
+            if (_.isString(groups)) groups = [groups];
+
+            object.groups = groups.map((s) => {
               return LDAP_SETTINGS.groups.regex ? s.match(LDAP_SETTINGS.groups.regex)[1] : s;
             });
           }
