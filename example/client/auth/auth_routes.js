@@ -20,13 +20,13 @@ Accounts.onLogin(function() {
   FlowRouter.go(redirect);
 });
 
-// Require users to have at least the 'access' role.
-FlowRouter.triggers.enter([requireAccess], {except: AUTH_ROUTES});
-function requireAccess() {
-  if (!Roles.userIsInRole(Meteor.user(), 'access')) {
-    FlowRouter.go('noaccess');
-  }
-}
+// // Require users to have at least the 'access' role.
+// FlowRouter.triggers.enter([requireAccess], {except: AUTH_ROUTES});
+// function requireAccess() {
+//   if (!Roles.userIsInRole(Meteor.user(), 'access')) {
+//     FlowRouter.go('noaccess');
+//   }
+// }
 
 
 FlowRouter.route('/login', {

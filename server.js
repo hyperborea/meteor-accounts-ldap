@@ -6,17 +6,14 @@ let Future = Npm.require('fibers/future');
 LDAP_SETTINGS = {
   // Following settings must be provided
   url: undefined,
-  dn: undefined,
-  filter: undefined,
+  userDn: undefined,
+  userFilter: '',
 
-  // How to extract the groups
-  groups: {
-    sourceField: 'memberOf',
-    regex: '^cn=(.*?),',
-  },
+  groupsDn: undefined,
+  groupsFilter: '',
 
   // Fields to copy over from LDAP to Meteor account.
-  fields: ['displayName', 'groups'],
+  fields: ['displayName'],
   // If user is in any of the listed groups the Meteor role will be added, otherwise removed.
   roleMapping: {
     // 'meteorRole': ['ldapGroup1', 'ldapGroup2'],
@@ -36,11 +33,11 @@ class LDAP {
     });
   }
 
-  dn () {
-    return LDAP_SETTINGS.dn.replace('{username}', this.username);
+  dn() {
+    return LDAP_SETTINGS.userDn.replace('{username}', this.username);
   }
  
-  authenticate () {
+  authenticate() {
     let fut = new Future();
 
     this.client.bind(this.dn(), this.password, function(err, res) {
@@ -54,42 +51,61 @@ class LDAP {
     return fut.wait();
   }
 
-  query () {
+  query() {
     let fut = new Future();
     let self = this;
 
     this.client.search(this.dn(), {
       scope: 'sub',
-      filter: LDAP_SETTINGS.filter
-    }, function (err, res) {
+      filter: LDAP_SETTINGS.userFilter
+    }, function(err, res) {
       if (err) {
         throw new Meteor.Error(err.code, err.message);
       }
       else {
-        res.on('searchEntry', function (entry) {
+        res.on('searchEntry', function(entry) {
           let object = _.extend({ username: self.username },
             _.pick(entry.object, LDAP_SETTINGS.fields)
           );
 
-          if (LDAP_SETTINGS.groups) {
-            let groups = entry.object[LDAP_SETTINGS.groups.sourceField] || [];
-            if (_.isString(groups)) groups = [groups];
-
-            object.groups = groups.map((s) => {
-              return LDAP_SETTINGS.groups.regex ? s.match(LDAP_SETTINGS.groups.regex)[1] : s;
-            });
-          }
-
-          fut.return(object);
+          self.getGroups(function(groups) {
+            object.groups = groups;
+            fut.return(object);
+          });
         });
 
-        res.on('error', function (err) {
+        res.on('error', function(err) {
           throw new Meteor.Error(err.code, err.message);
         });
       }
     });
 
     return fut.wait();
+  }
+
+  getGroups(callback) {
+    let groups = [];
+
+    if (!LDAP_SETTINGS.groupsDn || !LDAP_SETTINGS.groupsFilter) {
+      callback(groups);
+      return;
+    }
+
+    this.client.search(LDAP_SETTINGS.groupsDn, {
+      scope: 'sub',
+      filter: LDAP_SETTINGS.groupsFilter.replace('{dn}', this.dn()),
+      attributes: ['cn']
+    }, function(err, res) {
+      if (!err) {
+        res.on('searchEntry', function(entry) {
+          groups.push(entry.object.cn);
+        });
+
+        res.on('end', function() {
+          callback(groups);
+        });
+      }
+    });
   }
 }
 
