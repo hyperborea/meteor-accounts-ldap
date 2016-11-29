@@ -6,11 +6,11 @@ let Future = Npm.require('fibers/future');
 LDAP_SETTINGS = {
   // Following settings must be provided
   url: undefined,
-  userDn: undefined,
+  userDn: undefined, // supports {username} placeholder
   userFilter: '',
 
   groupsDn: undefined,
-  groupsFilter: '',
+  groupsFilter: '', // supports {userDn} placeholder
 
   // Fields to copy over from LDAP to Meteor account.
   fields: ['displayName'],
@@ -93,7 +93,7 @@ class LDAP {
 
     this.client.search(LDAP_SETTINGS.groupsDn, {
       scope: 'sub',
-      filter: LDAP_SETTINGS.groupsFilter.replace('{dn}', this.dn()),
+      filter: LDAP_SETTINGS.groupsFilter.replace('{userDn}', this.dn()),
       attributes: ['cn']
     }, function(err, res) {
       if (!err) {

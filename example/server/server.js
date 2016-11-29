@@ -4,7 +4,7 @@ _.extend(LDAP_SETTINGS, {
   userFilter: "(&(objectClass=kreditorUser)(kreditorEnabledUser=TRUE))",
 
   groupsDn: "ou=Groups,dc=internal,dc=machines",
-  groupsFilter: "(&(objectClass=kreditorGroup)(uniqueMember={dn}))",
+  groupsFilter: "(&(objectClass=kreditorGroup)(uniqueMember={userDn}))",
 
   // allowedGroups: ['users'],
   
