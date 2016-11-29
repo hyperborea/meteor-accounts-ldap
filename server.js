@@ -4,13 +4,13 @@ let Future = Npm.require('fibers/future');
 
 
 LDAP_SETTINGS = {
-  // Following settings must be provided
+  // url and userDn must be provided
   url: undefined,
   userDn: undefined, // supports {username} placeholder
-  userFilter: '',
+  userFilter: '(&)',
 
   groupsDn: undefined,
-  groupsFilter: '', // supports {userDn} placeholder
+  groupsFilter: '(&(member={userDn}))', // supports {userDn} placeholder
 
   // Fields to copy over from LDAP to Meteor account.
   fields: ['displayName'],

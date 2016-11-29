@@ -25,7 +25,7 @@ email@1.1.17
 geojson-utils@1.0.9
 html-tools@1.0.10
 htmljs@1.0.10
-hyperborea:accounts-ldap@2.0.2
+hyperborea:accounts-ldap@3.0.0
 id-map@1.0.8
 jquery@1.11.9
 localstorage@1.0.11
