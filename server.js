@@ -122,7 +122,7 @@ Accounts.registerLoginHandler('ldap', function(loginRequest) {
 
   if (ldap.authenticate()) {
     let userId = null;
-    let user = Meteor.users.findOne({username: username});
+    let user = Accounts.findUserByUsername(username);
 
     if (user) {
       userId = user._id;

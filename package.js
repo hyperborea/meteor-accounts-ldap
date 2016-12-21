@@ -1,6 +1,6 @@
 Package.describe({
   name: 'hyperborea:accounts-ldap',
-  version: '3.0.1',
+  version: '3.0.2',
   summary: 'Extends account package to support LDAP.',
   git: '',
   documentation: null
